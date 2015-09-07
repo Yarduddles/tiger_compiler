@@ -54,7 +54,7 @@ array       => (Tokens.ARRAY(yypos, yypos+5));
 ":"         => (Tokens.COLON(yypos, yypos+1));
 ","         => (Tokens.COMMA(yypos, yypos+1));
 
-[a-zA-Z_][a-zA-Z0-9_]*   => (Tokens.ID(yytext, yypos, yypos + (size yytext)));
+[a-zA-Z][a-zA-Z0-9_]*   => (Tokens.ID(yytext, yypos, yypos + (size yytext)));
 
 [0-9]+    => (Tokens.INT(yytext, yypos, yypos + (size yytext)));
 
