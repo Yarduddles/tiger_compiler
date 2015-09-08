@@ -7,6 +7,9 @@ fun err(p1,p2) = ErrorMsg.error p1
 
 val nested_comments = ref 0
 
+val current_text = ref ""
+val text_start = ref 0
+
 fun eof() = let val pos = hd(!linePos) 
             in
                 if !nested_comments <> 0
@@ -20,7 +23,7 @@ alpha=[A-Za-z];
 digit = [0-9];
 ws = [\ \t];
 
-%s COMMENT;
+%s COMMENT STRING;
 
 %%
 <INITIAL>type        => (Tokens.TYPE(yypos,yypos+4));
@@ -76,7 +79,24 @@ ws = [\ \t];
 <INITIAL,COMMENT>(\n)|(\r\n)      => (lineNum := !lineNum+1; linePos := yypos :: !linePos; continue());
 <INITIAL>[\ \t]  => ( continue() );
 
-<INITIAL>\"[^\"]+\"      => (Tokens.STRING(yytext, yypos, yypos + (size yytext)));
+<INITIAL>\"             => (YYBEGIN STRING; current_text := ""; text_start := yypos; continue());
+<STRING>\\n             => (current_text := !current_text ^ "\n"; continue());
+<STRING>\\t             => (current_text := !current_text ^ "\t"; continue());
+<STRING>\\b             => (current_text := !current_text ^ "\b"; continue());
+<STRING>\\f             => (current_text := !current_text ^ "\f"; continue());
+<STRING>\\\"            => (current_text := !current_text ^ "\""; continue());
+<STRING>\\\\            => (current_text := !current_text ^ "\\"; continue());
+<STRING>\\              => (ErrorMsg.error yypos ("illegal character " ^ yytext); continue());
+<STRING>\"              => (YYBEGIN INITIAL; 
+                            Tokens.STRING(!current_text, !text_start, !text_start + (size (!current_text))));
+
+<STRING>(\n)|(\r\n)     => (lineNum := !lineNum+1; 
+                            linePos := yypos :: !linePos; 
+                            ErrorMsg.error yypos ("Illegal new line inside of string"); 
+                            YYBEGIN INITIAL; 
+                            continue());
+
+<STRING>.               => (current_text := !current_text ^ yytext; continue());
 
 <INITIAL,COMMENT>"/*"           => (YYBEGIN COMMENT; nested_comments := !nested_comments+1; continue());
 <COMMENT>"*/"           => (nested_comments := !nested_comments-1; 

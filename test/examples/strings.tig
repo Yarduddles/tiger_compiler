@@ -1,0 +1,9 @@
+let
+    var a:string := "hello"
+    var b:string := "blah blah!"
+    var c:string := "another one!"
+
+    var escape_new_line:string := "escapethis->\nit was escaped!"
+
+    var failure:string := "no end!!
+
